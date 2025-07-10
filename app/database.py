@@ -1,8 +1,9 @@
-students_db = []
-courses_db = []
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Dummy user
-USER = {
-    "username": "admin",
-    "password": "password123"  # Just for demo
-}
+DATABASE_URL = "sqlite:///./college.db"
+
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+
+Base = declarative_base()
