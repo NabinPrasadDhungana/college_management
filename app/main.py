@@ -52,3 +52,17 @@ def delete_course(course_id: int, db: Session = Depends(get_db), user: str = Dep
     if not deleted:
         raise HTTPException(status_code=404, detail="Course not found")
     return {"detail": f"Course with ID {course_id} deleted"}
+
+@app.put("/students/{student_id}", response_model=schemas.StudentOut)
+def update_student(student_id: int, student: schemas.StudentCreate, db: Session = Depends(get_db), user: str = Depends(auth.get_current_user)):
+    updated = crud.update_student(db, student_id, student)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return updated
+
+@app.put("/courses/{course_id}", response_model=schemas.CourseOut)
+def update_course(course_id: int, course: schemas.CourseCreate, db: Session = Depends(get_db), user: str = Depends(auth.get_current_user)):
+    updated = crud.update_course(db, course_id, course)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return updated

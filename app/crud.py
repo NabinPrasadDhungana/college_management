@@ -42,3 +42,29 @@ def delete_course(db: Session, course_id: int):
 
 def get_courses(db: Session):
     return db.query(models.Course).all()
+
+def update_student(db: Session, student_id: int, updated_student: schemas.StudentCreate):
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student:
+        return None
+    student.name = updated_student.name
+    student.age = updated_student.age
+    student.department = updated_student.department
+    student.email = updated_student.email
+    # Update courses relation
+    student.courses = db.query(models.Course).filter(models.Course.id.in_(updated_student.course_ids)).all()
+    db.commit()
+    db.refresh(student)
+    return student
+
+def update_course(db: Session, course_id: int, updated_course: schemas.CourseCreate):
+    course = db.query(models.Course).filter(models.Course.id == course_id).first()
+    if not course:
+        return None
+    course.title = updated_course.title
+    course.code = updated_course.code
+    course.instructor = updated_course.instructor
+    db.commit()
+    db.refresh(course)
+    return course
+
