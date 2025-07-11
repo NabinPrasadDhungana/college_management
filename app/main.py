@@ -38,3 +38,17 @@ def create_course(course: schemas.CourseCreate, db: Session = Depends(get_db), u
 @app.get("/courses", response_model=list[schemas.CourseOut])
 def read_courses(db: Session = Depends(get_db), user: str = Depends(auth.get_current_user)):
     return crud.get_courses(db)
+
+@app.delete("/students/{student_id}")
+def delete_student(student_id: int, db: Session = Depends(get_db), user: str = Depends(auth.get_current_user)):
+    deleted = crud.delete_student(db, student_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return {"detail": f"Student with ID {student_id} deleted"}
+
+@app.delete("/courses/{course_id}")
+def delete_course(course_id: int, db: Session = Depends(get_db), user: str = Depends(auth.get_current_user)):
+    deleted = crud.delete_course(db, course_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return {"detail": f"Course with ID {course_id} deleted"}
