@@ -1,40 +1,36 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from . import auth, database, schemas, crud, models
+from fastapi import HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
+from datetime import datetime, timedelta, timezone
+from jose import JWTError, jwt
+import os
+from dotenv import load_dotenv
 
-from fastapi.security import OAuth2PasswordRequestForm
+load_dotenv()
 
-app = FastAPI()
+USER = {
+    "username": os.getenv("ADMIN_USERNAME"),
+    "password": os.getenv("ADMIN_PASSWORD")
+}
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-key")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-models.Base.metadata.create_all(bind=database.engine)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-# Dependency
-def get_db():
-    db = database.SessionLocal()
+def authenticate_user(username: str, password: str):
+    if username == USER["username"] and password == USER["password"]:
+        return True
+    return False
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.now(tz=timezone.utc) + (expires_delta or timedelta(minutes=15))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
-        yield db
-    finally:
-        db.close()
-
-@app.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    if not auth.authenticate_user(form_data.username, form_data.password):
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    token = auth.create_access_token(data={"sub": form_data.username})
-    return {"access_token": token, "token_type": "bearer"}
-
-@app.post("/students", response_model=schemas.StudentOut)
-def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db), user: str = Depends(auth.get_current_user)):
-    return crud.create_student(db, student)
-
-@app.get("/students", response_model=list[schemas.StudentOut])
-def read_students(db: Session = Depends(get_db), user: str = Depends(auth.get_current_user)):
-    return crud.get_students(db)
-
-@app.post("/courses", response_model=schemas.CourseOut)
-def create_course(course: schemas.CourseCreate, db: Session = Depends(get_db), user: str = Depends(auth.get_current_user)):
-    return crud.create_course(db, course)
-
-@app.get("/courses", response_model=list[schemas.CourseOut])
-def read_courses(db: Session = Depends(get_db), user: str = Depends(auth.get_current_user)):
-    return crud.get_courses(db)
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("sub")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
