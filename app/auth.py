@@ -2,9 +2,15 @@ from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
-from app.database import USER
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
+
+USER = {
+    "username": os.getenv("ADMIN_USERNAME"),
+    "password": os.getenv("ADMIN_PASSWORD")
+}
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
