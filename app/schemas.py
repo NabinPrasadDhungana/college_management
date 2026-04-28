@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class CourseBase(BaseModel):
     title: str
@@ -11,8 +11,7 @@ class CourseCreate(CourseBase):
 
 class CourseOut(CourseBase):
     id: int
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class StudentBase(BaseModel):
     name: str
@@ -26,5 +25,4 @@ class StudentCreate(StudentBase):
 class StudentOut(StudentBase):
     id: int
     courses: List[CourseOut] = []
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
